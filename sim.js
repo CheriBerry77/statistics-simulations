@@ -498,8 +498,9 @@ function runMany(times = 100) {
 
   document.getElementById('valVariability').textContent = pct(stdDev);
 
-  drawDistribution(results, trueRate, mean);
   document.getElementById('distContainer').classList.remove('hidden');
+  resizeDistCanvas();
+  drawDistribution(results, trueRate, mean);
 
   // Update cards
   document.getElementById('valPopTruth').textContent = pct(trueRate);
@@ -732,7 +733,6 @@ document.getElementById('runManyBtn').addEventListener('click', function() {
   if (!state.population.length) generatePopulation();
   document.getElementById('canvasOverlay').classList.add('hidden');
   runMany(100);
-  resizeDistCanvas();
 });
 
 // Reset button
