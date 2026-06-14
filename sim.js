@@ -823,6 +823,20 @@ generatePopulation();
 drawPopulation(false);
 document.getElementById('canvasOverlay').classList.remove('hidden');
 
+// ── Info Card Dropdowns ───────────────────────────────────────
+document.querySelectorAll('.info-card').forEach(card => {
+  function toggle(e) {
+    if (e.target.closest('.card-dropdown')) return;
+    const isOpen = card.getAttribute('aria-expanded') === 'true';
+    document.querySelectorAll('.info-card').forEach(c => c.setAttribute('aria-expanded', 'false'));
+    card.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+  }
+  card.addEventListener('click', toggle);
+  card.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(e); }
+  });
+});
+
 window.addEventListener('resize', () => {
   resizeMainCanvas();
   layoutPopulation(state.population);
