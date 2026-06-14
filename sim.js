@@ -2,93 +2,51 @@
    SampleSim — Simulation Engine + Visualization
    ============================================================ */
 
-// ── Survey Question Presets ───────────────────────────────────
+// ── Static config (no DOM needed) ────────────────────────────
 const QUESTIONS = {
   support: {
     text: '"Do you support the proposed school budget increase?"',
-    trueRateA: 70,   // Group A (urban/higher income) YES rate
-    trueRateB: 30,   // Group B (rural/lower income) YES rate
-    groupA: 'Urban residents',
-    groupB: 'Rural residents',
-    convenienceBias: 'high',   // convenience sampling skews toward group A
-    voluntaryBias: 'high',     // strong-opinion respondents over-represent YES
+    trueRateA: 70, trueRateB: 30,
+    groupA: 'Urban residents', groupB: 'Rural residents',
+    convenienceBias: 'high', voluntaryBias: 'high',
   },
   health: {
     text: '"Do you exercise at least 3 times per week?"',
-    trueRateA: 65,
-    trueRateB: 35,
-    groupA: 'Under 40',
-    groupB: 'Over 40',
-    convenienceBias: 'high',
-    voluntaryBias: 'high',
+    trueRateA: 65, trueRateB: 35,
+    groupA: 'Under 40', groupB: 'Over 40',
+    convenienceBias: 'high', voluntaryBias: 'high',
   },
   income: {
     text: '"Is your household income above $75,000/year?"',
-    trueRateA: 70,
-    trueRateB: 20,
-    groupA: 'College-educated',
-    groupB: 'Non-college',
-    convenienceBias: 'high',
-    voluntaryBias: 'low',
+    trueRateA: 70, trueRateB: 20,
+    groupA: 'College-educated', groupB: 'Non-college',
+    convenienceBias: 'high', voluntaryBias: 'low',
   },
   custom: {
     text: '"Custom question"',
-    trueRateA: 50,
-    trueRateB: 50,
-    groupA: 'Group A',
-    groupB: 'Group B',
-    convenienceBias: 'med',
-    voluntaryBias: 'med',
+    trueRateA: 50, trueRateB: 50,
+    groupA: 'Group A', groupB: 'Group B',
+    convenienceBias: 'med', voluntaryBias: 'med',
   }
 };
 
 const METHOD_INFO = {
-  srs: {
-    name: 'Simple Random Sample',
-    desc: 'Every member of the population has an equal probability of being chosen. The gold standard for avoiding bias.',
-    biasType: 'none',
-    color: '#4ECCA3',
-  },
-  stratified: {
-    name: 'Stratified Random Sample',
-    desc: 'Divide the population into subgroups (strata), then take an SRS within each stratum. Ensures proportional representation.',
-    biasType: 'none',
-    color: '#6B8EFF',
-  },
-  cluster: {
-    name: 'Cluster Sampling',
-    desc: 'Randomly select entire clusters (e.g. neighborhoods, classrooms). Practical but can miss variation between clusters.',
-    biasType: 'mild',
-    color: '#FFD93D',
-  },
-  convenience: {
-    name: 'Convenience Sampling',
-    desc: 'Sample whoever is easiest to reach. Almost always introduces bias because accessible people differ from the population.',
-    biasType: 'high',
-    color: '#FF6B6B',
-  },
-  voluntary: {
-    name: 'Voluntary Response Sampling',
-    desc: 'People choose whether to respond. Creates strong bias toward those with extreme opinions.',
-    biasType: 'high',
-    color: '#FF9999',
-  }
+  srs:         { name: 'Simple Random Sample',      desc: 'Every member of the population has an equal probability of being chosen. The gold standard for avoiding bias.',                                          biasType: 'none', color: '#4ECCA3' },
+  stratified:  { name: 'Stratified Random Sample',  desc: 'Divide the population into subgroups (strata), then take an SRS within each stratum. Ensures proportional representation.',                            biasType: 'none', color: '#6B8EFF' },
+  cluster:     { name: 'Cluster Sampling',           desc: 'Randomly select entire clusters (e.g. neighborhoods, classrooms). Practical but can miss variation between clusters.',                                  biasType: 'mild', color: '#FFD93D' },
+  convenience: { name: 'Convenience Sampling',       desc: 'Sample whoever is easiest to reach. Almost always introduces bias because accessible people differ from the population.',                               biasType: 'high', color: '#FF6B6B' },
+  voluntary:   { name: 'Voluntary Response Sampling',desc: 'People choose whether to respond. Creates strong bias toward those with extreme opinions.',                                                             biasType: 'high', color: '#FF9999' },
 };
 
-// ── Confidence Level Config ───────────────────────────────────
 const Z_STARS = {
   0.80: { z: 1.282, label: '80%' },
   0.90: { z: 1.645, label: '90%' },
   0.95: { z: 1.960, label: '95%' },
   0.99: { z: 2.576, label: '99%' },
 };
-state.ciLevel = 0.95;
 
-function getZStar() { return Z_STARS[state.ciLevel].z; }
-function getCILabel() { return Z_STARS[state.ciLevel].label; }
-
-
-let state = {
+// ── State ─────────────────────────────────────────────────────
+const state = {
   question: 'support',
   popSize: 500,
   strataRatio: 0.40,
@@ -96,50 +54,49 @@ let state = {
   strataBRateVal: 30,
   sampleSize: 50,
   method: 'srs',
+  ciLevel: 0.95,
   population: [],
   lastSample: [],
   manyRunResults: [],
   animating: false,
 };
 
-// ── Canvas Setup ──────────────────────────────────────────────
-const mainCanvas = document.getElementById('mainCanvas');
-const ctx = mainCanvas.getContext('2d');
-const distCanvas = document.getElementById('distCanvas');
-const dctx = distCanvas.getContext('2d');
-const heroCanvas = document.getElementById('heroCanvas');
-const hctx = heroCanvas.getContext('2d');
+function getZStar()  { return Z_STARS[state.ciLevel].z; }
+function getCILabel(){ return Z_STARS[state.ciLevel].label; }
+
+// ── Canvas references (set in init) ──────────────────────────
+let mainCanvas, ctx, distCanvas, dctx, heroCanvas, hctx;
 
 function resizeMainCanvas() {
-  const rect = mainCanvas.parentElement.getBoundingClientRect();
-  mainCanvas.width = rect.width;
+  if (!mainCanvas) return;
+  const w = mainCanvas.parentElement.getBoundingClientRect().width
+         || mainCanvas.parentElement.offsetWidth
+         || 600;
+  mainCanvas.width  = w;
   mainCanvas.height = 320;
 }
-window.addEventListener('resize', () => { resizeMainCanvas(); drawPopulation(); });
-resizeMainCanvas();
 
 function resizeDistCanvas() {
-  const rect = distCanvas.parentElement.getBoundingClientRect();
-  distCanvas.width = rect.width;
+  if (!distCanvas) return;
+  const w = distCanvas.parentElement.getBoundingClientRect().width
+         || distCanvas.parentElement.offsetWidth
+         || 600;
+  distCanvas.width = w;
 }
 
 // ── Population Generation ─────────────────────────────────────
 function generatePopulation() {
-  const q = getQuestion();
   const pop = [];
   const nA = Math.round(state.popSize * state.strataRatio);
   const nB = state.popSize - nA;
   const rateA = state.strataARateVal / 100;
   const rateB = state.strataBRateVal / 100;
 
-  for (let i = 0; i < nA; i++) {
-    pop.push({ id: i, group: 'A', yes: Math.random() < rateA, sampled: false, cluster: Math.floor(i / 30) });
-  }
-  for (let i = 0; i < nB; i++) {
+  for (let i = 0; i < nA; i++)
+    pop.push({ id: i,      group: 'A', yes: Math.random() < rateA, sampled: false, cluster: Math.floor(i / 30) });
+  for (let i = 0; i < nB; i++)
     pop.push({ id: nA + i, group: 'B', yes: Math.random() < rateB, sampled: false, cluster: Math.floor(i / 30) + Math.ceil(nA / 30) });
-  }
 
-  // Assign visual positions using a grid layout
   layoutPopulation(pop);
   state.population = pop;
   return pop;
@@ -152,7 +109,7 @@ function layoutPopulation(pop) {
   const rows = Math.ceil(pop.length / cols);
   const cellW = (W - margin * 2) / cols;
   const cellH = (H - margin * 2) / rows;
-  const dotR = Math.max(2.5, Math.min(6, cellW * 0.35));
+  const dotR  = Math.max(2.5, Math.min(6, cellW * 0.35));
 
   pop.forEach((p, i) => {
     const col = i % cols;
@@ -164,12 +121,7 @@ function layoutPopulation(pop) {
 }
 
 function getTrueRate() {
-  const nA = Math.round(state.popSize * state.strataRatio);
-  const nB = state.popSize - nA;
-  const rateA = state.strataARateVal / 100;
-  const rateB = state.strataBRateVal / 100;
-  const trueYes = state.population.filter(p => p.yes).length;
-  return trueYes / state.population.length;
+  return state.population.filter(p => p.yes).length / state.population.length;
 }
 
 function getQuestion() {
@@ -182,27 +134,20 @@ function getQuestion() {
 function drawPopulation(highlightSample = false) {
   const W = mainCanvas.width, H = mainCanvas.height;
   ctx.clearRect(0, 0, W, H);
-
   const pop = state.population;
   if (!pop.length) return;
-
   const mi = METHOD_INFO[state.method];
 
   pop.forEach(p => {
     const isSampled = p.sampled;
     let fill, alpha;
-
     if (isSampled && highlightSample) {
-      fill = mi.color;
-      alpha = 1;
+      fill = mi.color; alpha = 1;
     } else if (!isSampled && highlightSample) {
-      fill = p.group === 'A' ? '#4ECCA3' : '#FF6B6B';
-      alpha = 0.15;
+      fill = p.group === 'A' ? '#4ECCA3' : '#FF6B6B'; alpha = 0.15;
     } else {
-      fill = p.group === 'A' ? '#4ECCA3' : '#FF6B6B';
-      alpha = 0.45;
+      fill = p.group === 'A' ? '#4ECCA3' : '#FF6B6B'; alpha = 0.45;
     }
-
     ctx.globalAlpha = alpha;
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
@@ -218,10 +163,8 @@ function drawPopulation(highlightSample = false) {
       ctx.stroke();
     }
   });
-
   ctx.globalAlpha = 1;
 
-  // Draw cluster outlines if cluster method
   if (state.method === 'cluster' && highlightSample && state.lastSample.length) {
     const selectedClusters = [...new Set(state.lastSample.map(p => p.cluster))];
     selectedClusters.forEach(cid => {
@@ -243,80 +186,57 @@ function drawPopulation(highlightSample = false) {
 
 // ── Sampling Methods ──────────────────────────────────────────
 function runSRS() {
-  const pop = state.population;
-  const n = Math.min(state.sampleSize, pop.length);
-  const shuffled = [...pop].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, n);
+  const n = Math.min(state.sampleSize, state.population.length);
+  return [...state.population].sort(() => Math.random() - 0.5).slice(0, n);
 }
 
 function runStratified() {
   const groupA = state.population.filter(p => p.group === 'A');
   const groupB = state.population.filter(p => p.group === 'B');
-  const n = state.sampleSize;
+  const n  = state.sampleSize;
   const nA = Math.round(n * state.strataRatio);
   const nB = n - nA;
-  const sA = [...groupA].sort(() => Math.random() - 0.5).slice(0, nA);
-  const sB = [...groupB].sort(() => Math.random() - 0.5).slice(0, nB);
-  return [...sA, ...sB];
+  return [
+    ...[...groupA].sort(() => Math.random() - 0.5).slice(0, nA),
+    ...[...groupB].sort(() => Math.random() - 0.5).slice(0, nB),
+  ];
 }
 
 function runCluster() {
   const clusters = {};
-  state.population.forEach(p => {
-    if (!clusters[p.cluster]) clusters[p.cluster] = [];
-    clusters[p.cluster].push(p);
-  });
-  const clusterIds = Object.keys(clusters);
+  state.population.forEach(p => { (clusters[p.cluster] = clusters[p.cluster] || []).push(p); });
+  const clusterIds  = Object.keys(clusters);
   const numClusters = Math.max(1, Math.round(state.sampleSize / 25));
   const selectedIds = [...clusterIds].sort(() => Math.random() - 0.5).slice(0, numClusters);
   let sample = [];
   selectedIds.forEach(id => { sample = sample.concat(clusters[id]); });
-  // Limit to sample size
-  return sample.slice(0, state.sampleSize * 2); // clusters may be big
-}
-
-function runConvenience() {
-  // Convenience: heavily biased toward Group A (urban/accessible)
-  const pop = state.population;
-  const q = getQuestion();
-  const biasStrength = q.convenienceBias === 'high' ? 8 : q.convenienceBias === 'med' ? 3 : 1.5;
-  const weighted = pop.map(p => ({
-    p,
-    w: p.group === 'A' ? biasStrength : 1
-  }));
-  const sample = weightedSample(weighted, state.sampleSize);
-  return sample;
-}
-
-function runVoluntary() {
-  // Voluntary: strong-opinion people (YES or NO extremes) more likely to respond
-  const pop = state.population;
-  const q = getQuestion();
-  // People who say YES are more opinionated — higher response rate
-  const biasStrength = q.voluntaryBias === 'high' ? 5 : q.voluntaryBias === 'med' ? 2.5 : 1.5;
-  const weighted = pop.map(p => ({
-    p,
-    w: p.yes ? biasStrength : 1
-  }));
-  const sample = weightedSample(weighted, state.sampleSize);
-  return sample;
+  return sample.slice(0, state.sampleSize * 2);
 }
 
 function weightedSample(weightedItems, n) {
   const result = [];
-  const items = [...weightedItems];
-  const totalWeight = items.reduce((s, i) => s + i.w, 0);
-  const used = new Set();
-
-  for (let k = 0; k < Math.min(n, items.length); k++) {
-    let rand = Math.random() * items.reduce((s, i, idx) => used.has(idx) ? s : s + i.w, 0);
-    for (let idx = 0; idx < items.length; idx++) {
+  const used   = new Set();
+  for (let k = 0; k < Math.min(n, weightedItems.length); k++) {
+    let rand = Math.random() * weightedItems.reduce((s, it, idx) => used.has(idx) ? s : s + it.w, 0);
+    for (let idx = 0; idx < weightedItems.length; idx++) {
       if (used.has(idx)) continue;
-      rand -= items[idx].w;
-      if (rand <= 0) { result.push(items[idx].p); used.add(idx); break; }
+      rand -= weightedItems[idx].w;
+      if (rand <= 0) { result.push(weightedItems[idx].p); used.add(idx); break; }
     }
   }
   return result;
+}
+
+function runConvenience() {
+  const q = getQuestion();
+  const bias = q.convenienceBias === 'high' ? 8 : q.convenienceBias === 'med' ? 3 : 1.5;
+  return weightedSample(state.population.map(p => ({ p, w: p.group === 'A' ? bias : 1 })), state.sampleSize);
+}
+
+function runVoluntary() {
+  const q = getQuestion();
+  const bias = q.voluntaryBias === 'high' ? 5 : q.voluntaryBias === 'med' ? 2.5 : 1.5;
+  return weightedSample(state.population.map(p => ({ p, w: p.yes ? bias : 1 })), state.sampleSize);
 }
 
 function getSample() {
@@ -331,16 +251,12 @@ function getSample() {
 
 // ── Animation ─────────────────────────────────────────────────
 async function animateSample(sample) {
-  // Reset
   state.population.forEach(p => p.sampled = false);
   drawPopulation(false);
-
   const delay = ms => new Promise(r => setTimeout(r, ms));
   const batchSize = Math.max(1, Math.floor(sample.length / 12));
-
   for (let i = 0; i < sample.length; i += batchSize) {
-    const batch = sample.slice(i, i + batchSize);
-    batch.forEach(p => p.sampled = true);
+    sample.slice(i, i + batchSize).forEach(p => p.sampled = true);
     drawPopulation(true);
     await delay(40);
   }
@@ -348,130 +264,123 @@ async function animateSample(sample) {
 }
 
 // ── Results ───────────────────────────────────────────────────
+function pct(v) { return (v * 100).toFixed(1) + '%'; }
+
 function computeResults(sample) {
-  const yesCount = sample.filter(p => p.yes).length;
-  const sampleRate = yesCount / sample.length;
-  const trueRate = getTrueRate();
-  const bias = sampleRate - trueRate;
-  return { sampleRate, trueRate, bias, n: sample.length };
+  const sampleRate = sample.filter(p => p.yes).length / sample.length;
+  const trueRate   = getTrueRate();
+  return { sampleRate, trueRate, bias: sampleRate - trueRate, n: sample.length };
 }
 
 function showResults(results, sample) {
   const { sampleRate, trueRate, bias, n } = results;
   const mi = METHOD_INFO[state.method];
 
-  // Update cards
-  document.getElementById('valPopTruth').textContent = pct(trueRate);
+  document.getElementById('valPopTruth').textContent    = pct(trueRate);
   document.getElementById('valSampleResult').textContent = pct(sampleRate);
-  document.getElementById('barPopTruth').style.width = pct(trueRate);
+  document.getElementById('barPopTruth').style.width    = pct(trueRate);
   document.getElementById('barSampleResult').style.width = pct(sampleRate);
 
-  // Bias card
-  const biasEl = document.getElementById('valBias');
+  const biasEl   = document.getElementById('valBias');
   const biasCard = document.getElementById('cardBias');
-  const biasInd = document.getElementById('biasIndicator');
-  biasEl.textContent = (bias >= 0 ? '+' : '') + pct(bias);
-  biasEl.style.color = Math.abs(bias) < 0.03 ? '#4ECCA3' : Math.abs(bias) < 0.08 ? '#FFD93D' : '#FF6B6B';
-  biasCard.className = 'result-card bias-card ' + (Math.abs(bias) < 0.03 ? 'neutral' : bias > 0 ? 'positive' : 'negative');
+  const biasInd  = document.getElementById('biasIndicator');
+  biasEl.textContent  = (bias >= 0 ? '+' : '') + pct(bias);
+  biasEl.style.color  = Math.abs(bias) < 0.03 ? '#4ECCA3' : Math.abs(bias) < 0.08 ? '#FFD93D' : '#FF6B6B';
+  biasCard.className  = 'result-card info-card bias-card ' + (Math.abs(bias) < 0.03 ? 'neutral' : bias > 0 ? 'positive' : 'negative');
   biasInd.textContent = Math.abs(bias) < 0.03 ? '✓ Near unbiased' : bias > 0 ? '▲ Overestimates truth' : '▼ Underestimates truth';
   biasInd.style.color = Math.abs(bias) < 0.03 ? '#4ECCA3' : '#FF6B6B';
 
-  // Bias explanation
-  const biasExp = document.getElementById('biasExplanation');
-  const biasIcon = document.getElementById('biasIcon');
+  const biasExp   = document.getElementById('biasExplanation');
+  const biasIcon  = document.getElementById('biasIcon');
   const biasTitle = document.getElementById('biasTitle');
-  const biasDesc = document.getElementById('biasDesc');
+  const biasDesc  = document.getElementById('biasDesc');
   biasExp.classList.remove('hidden', 'good');
 
   if (mi.biasType === 'none') {
     biasExp.classList.add('good');
-    biasIcon.textContent = '✅';
+    biasIcon.textContent  = '✅';
     biasTitle.textContent = mi.name + ' — Low Bias Risk';
-    biasDesc.textContent = Math.abs(bias) < 0.05
+    biasDesc.textContent  = Math.abs(bias) < 0.05
       ? `This sample is close to the population truth (${pct(trueRate)}). Any difference is sampling variability — what we'd expect from chance alone.`
-      : `There's some difference this run, but with ${mi.name}, it's due to random chance, not a systematic flaw in the method. Repeat the simulation to see it vary!`;
+      : `There's some difference this run, but with ${mi.name}, it's due to random chance, not a systematic flaw. Repeat the simulation to see it vary!`;
   } else if (mi.biasType === 'mild') {
-    biasIcon.textContent = '⚡';
+    biasIcon.textContent  = '⚡';
     biasTitle.textContent = mi.name + ' — Possible Cluster Bias';
-    biasDesc.textContent = `Cluster sampling can introduce bias if the selected clusters aren't representative of the whole population. The yellow outlines show which clusters were chosen this run.`;
+    biasDesc.textContent  = `Cluster sampling can introduce bias if the selected clusters aren't representative of the whole population. The yellow outlines show which clusters were chosen.`;
   } else {
-    biasIcon.textContent = '⚠️';
+    biasIcon.textContent  = '⚠️';
     biasTitle.textContent = mi.name + ' — High Bias Risk';
-    if (state.method === 'convenience') {
-      biasDesc.textContent = `Convenience sampling over-selected Group A (${QUESTIONS[state.question]?.groupA || 'accessible group'}), who tend to answer "${Math.round(state.strataARateVal)}% YES." The sample result is skewed away from the true population answer.`;
-    } else {
-      biasDesc.textContent = `Voluntary response sampling attracts people with strong opinions — in this case, people who say YES were more likely to respond. This inflates the YES rate beyond the true population value.`;
-    }
+    biasDesc.textContent  = state.method === 'convenience'
+      ? `Convenience sampling over-selected Group A (${QUESTIONS[state.question]?.groupA || 'accessible group'}), who tend to answer "${Math.round(state.strataARateVal)}% YES." The sample is skewed away from the true population answer.`
+      : `Voluntary response sampling attracts people with strong opinions — people who say YES were more likely to respond, inflating the YES rate beyond the true population value.`;
   }
 
   // Confidence Interval
-  const se = Math.sqrt((sampleRate * (1 - sampleRate)) / n);
-  const zStar = getZStar();
-  const moe = zStar * se;
-  const lower = Math.max(0, sampleRate - moe);
-  const upper = Math.min(1, sampleRate + moe);
+  const se      = Math.sqrt((sampleRate * (1 - sampleRate)) / n);
+  const zStar   = getZStar();
+  const moe     = zStar * se;
+  const lower   = Math.max(0, sampleRate - moe);
+  const upper   = Math.min(1, sampleRate + moe);
   const ciLabel = getCILabel();
-  const infPanel = document.getElementById('inferencePanel');
-  infPanel.classList.remove('hidden');
+
+  document.getElementById('inferencePanel').classList.remove('hidden');
   document.getElementById('inferenceHeader').textContent = `${ciLabel} Confidence Interval`;
-  document.getElementById('ciZstarVal').textContent = zStar.toFixed(3);
+  document.getElementById('ciZstarVal').textContent      = zStar.toFixed(3);
   document.getElementById('ciZstarRow').querySelector('.ci-zstar-note').textContent = `critical value for ${ciLabel} CI`;
-  document.getElementById('ciText').textContent = `${pct(sampleRate)} ± ${pct(moe)}  →  (${pct(lower)}, ${pct(upper)})`;
+  document.getElementById('ciText').textContent          = `${pct(sampleRate)} ± ${pct(moe)}  →  (${pct(lower)}, ${pct(upper)})`;
   drawCI(lower, upper, sampleRate, trueRate);
+
   const infWarn = document.getElementById('inferenceWarning');
   if (mi.biasType !== 'none') {
     infWarn.textContent = '⚠️ This CI is misleading — confidence intervals assume an unbiased sampling method. Bias cannot be fixed with a larger sample.';
     infWarn.style.color = '';
   } else {
     const missRate = (100 - parseFloat(ciLabel)).toFixed(0);
-    infWarn.textContent = trueRate >= lower && trueRate <= upper
+    const captures = trueRate >= lower && trueRate <= upper;
+    infWarn.textContent = captures
       ? `✓ The ${ciLabel} CI (${pct(lower)}, ${pct(upper)}) successfully captures the true parameter (${pct(trueRate)}).`
       : `This run's CI missed the true parameter — that happens ~${missRate}% of the time with ${ciLabel} CIs.`;
-    infWarn.style.color = trueRate >= lower && trueRate <= upper ? '#4ECCA3' : '#FFD93D';
+    infWarn.style.color = captures ? '#4ECCA3' : '#FFD93D';
   }
 
-  // Legend
   updateLegend(sample);
 }
 
 function drawCI(lower, upper, estimate, truth) {
   const vis = document.getElementById('ciVisual');
   vis.innerHTML = '';
-  const W = vis.offsetWidth || 400;
+  const W   = vis.offsetWidth || 400;
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('width', '100%'); svg.setAttribute('height', '36');
+  svg.setAttribute('width', '100%');
+  svg.setAttribute('height', '36');
   svg.setAttribute('viewBox', `0 0 ${W} 36`);
 
   const toX = v => 16 + v * (W - 32);
-  const cy = 18;
+  const cy  = 18;
 
-  // CI bar
-  const rect = document.createElementNS(svg.namespaceURI, 'rect');
-  rect.setAttribute('x', toX(lower)); rect.setAttribute('y', cy - 5);
-  rect.setAttribute('width', toX(upper) - toX(lower)); rect.setAttribute('height', 10);
-  rect.setAttribute('fill', 'rgba(107,142,255,0.3)'); rect.setAttribute('rx', '4');
-  svg.appendChild(rect);
+  const bar = document.createElementNS(svg.namespaceURI, 'rect');
+  bar.setAttribute('x', toX(lower)); bar.setAttribute('y', cy - 5);
+  bar.setAttribute('width', toX(upper) - toX(lower)); bar.setAttribute('height', 10);
+  bar.setAttribute('fill', 'rgba(107,142,255,0.3)'); bar.setAttribute('rx', '4');
+  svg.appendChild(bar);
 
-  // Truth line
   const tl = document.createElementNS(svg.namespaceURI, 'line');
   tl.setAttribute('x1', toX(truth)); tl.setAttribute('y1', 2);
   tl.setAttribute('x2', toX(truth)); tl.setAttribute('y2', 34);
   tl.setAttribute('stroke', '#4ECCA3'); tl.setAttribute('stroke-width', '2');
   svg.appendChild(tl);
 
-  // Estimate marker
   const em = document.createElementNS(svg.namespaceURI, 'circle');
   em.setAttribute('cx', toX(estimate)); em.setAttribute('cy', cy);
   em.setAttribute('r', '6'); em.setAttribute('fill', '#6B8EFF');
   svg.appendChild(em);
 
-  // Labels
-  [{ v: lower, label: pct(lower) }, { v: upper, label: pct(upper) }].forEach(({ v, label }) => {
+  [{ v: lower }, { v: upper }].forEach(({ v }) => {
     const t = document.createElementNS(svg.namespaceURI, 'text');
     t.setAttribute('x', toX(v)); t.setAttribute('y', 13);
     t.setAttribute('text-anchor', 'middle'); t.setAttribute('fill', '#6B8EFF');
     t.setAttribute('font-size', '9'); t.setAttribute('font-family', 'JetBrains Mono, monospace');
-    t.textContent = label;
+    t.textContent = pct(v);
     svg.appendChild(t);
   });
 
@@ -479,304 +388,110 @@ function drawCI(lower, upper, estimate, truth) {
 }
 
 function updateLegend(sample) {
-  const leg = document.getElementById('canvasLegend');
-  const mi = METHOD_INFO[state.method];
-  const trueRate = getTrueRate();
-  const sampleRate = sample.filter(p => p.yes).length / sample.length;
-  leg.innerHTML = `
+  const mi  = METHOD_INFO[state.method];
+  document.getElementById('canvasLegend').innerHTML = `
     <span class="legend-item"><span class="legend-dot" style="background:#4ECCA3"></span>Group A (${pct(state.strataRatio)})</span>
     <span class="legend-item"><span class="legend-dot" style="background:#FF6B6B"></span>Group B</span>
-    <span class="legend-item"><span class="legend-dot" style="background:${mi.color}; box-shadow: 0 0 5px ${mi.color}"></span>Sampled (n=${sample.length})</span>
+    <span class="legend-item"><span class="legend-dot" style="background:${mi.color};box-shadow:0 0 5px ${mi.color}"></span>Sampled (n=${sample.length})</span>
   `;
 }
 
 // ── Many Runs ─────────────────────────────────────────────────
 function runMany(times = 100) {
   const results = [];
-  const originalPop = state.population.map(p => ({ ...p }));
-
   for (let i = 0; i < times; i++) {
-    // Re-randomize population for each run (same parameters)
     generatePopulation();
-    const sample = getSample();
-    const yesRate = sample.filter(p => p.yes).length / sample.length;
-    results.push(yesRate);
+    const sample  = getSample();
+    results.push(sample.filter(p => p.yes).length / sample.length);
   }
 
-  // Restore original layout positions with fresh population
   generatePopulation();
   state.population.forEach(p => p.sampled = false);
   drawPopulation(false);
-
   state.manyRunResults = results;
 
-  const mean = results.reduce((a, b) => a + b, 0) / results.length;
-  const variance = results.reduce((s, r) => s + (r - mean) ** 2, 0) / results.length;
-  const stdDev = Math.sqrt(variance);
+  const mean    = results.reduce((a, b) => a + b, 0) / results.length;
+  const stdDev  = Math.sqrt(results.reduce((s, r) => s + (r - mean) ** 2, 0) / results.length);
   const trueRate = state.population.filter(p => p.yes).length / state.population.length;
 
-  document.getElementById('valVariability').textContent = pct(stdDev);
+  document.getElementById('valVariability').textContent   = pct(stdDev);
+  document.getElementById('valPopTruth').textContent      = pct(trueRate);
+  document.getElementById('barPopTruth').style.width      = pct(trueRate);
+  document.getElementById('valSampleResult').textContent  = pct(mean) + ' (avg)';
+  document.getElementById('barSampleResult').style.width  = pct(mean);
 
-  document.getElementById('distContainer').classList.remove('hidden');
-  resizeDistCanvas();
-  drawDistribution(results, trueRate, mean);
-
-  // Update cards
-  document.getElementById('valPopTruth').textContent = pct(trueRate);
-  document.getElementById('barPopTruth').style.width = pct(trueRate);
-  document.getElementById('valSampleResult').textContent = pct(mean) + ' (avg)';
-  document.getElementById('barSampleResult').style.width = pct(mean);
-
-  const bias = mean - trueRate;
+  const bias   = mean - trueRate;
   const biasEl = document.getElementById('valBias');
   biasEl.textContent = (bias >= 0 ? '+' : '') + pct(bias) + ' (avg)';
   biasEl.style.color = Math.abs(bias) < 0.03 ? '#4ECCA3' : Math.abs(bias) < 0.08 ? '#FFD93D' : '#FF6B6B';
 
-  // Show bias explanation
-  const biasExp = document.getElementById('biasExplanation');
+  const biasExp   = document.getElementById('biasExplanation');
+  const biasIcon  = document.getElementById('biasIcon');
   const biasTitle = document.getElementById('biasTitle');
-  const biasDesc = document.getElementById('biasDesc');
-  const biasIcon = document.getElementById('biasIcon');
+  const biasDesc  = document.getElementById('biasDesc');
   biasExp.classList.remove('hidden', 'good');
   const mi = METHOD_INFO[state.method];
 
   if (mi.biasType === 'none') {
     biasExp.classList.add('good');
-    biasIcon.textContent = '✅';
+    biasIcon.textContent  = '✅';
     biasTitle.textContent = `${mi.name} — Sampling Distribution`;
-    biasDesc.textContent = `Across 100 simulations, the average sample result was ${pct(mean)}, and the true population value is ${pct(trueRate)}. The difference (${pct(Math.abs(bias))}) is within expected sampling variability. Standard deviation of sample proportions: ${pct(stdDev)}`;
+    biasDesc.textContent  = `Across 100 simulations, the average sample result was ${pct(mean)}, and the true population value is ${pct(trueRate)}. The difference (${pct(Math.abs(bias))}) is within expected sampling variability. Std dev of sample proportions: ${pct(stdDev)}`;
   } else {
-    biasIcon.textContent = '⚠️';
+    biasIcon.textContent  = '⚠️';
     biasTitle.textContent = `${mi.name} — Persistent Bias Detected`;
-    biasDesc.textContent = `Even after 100 simulations, the center of the distribution sits at ${pct(mean)}, not at the true value (${pct(trueRate)}). The bias of ${(bias >= 0 ? '+' : '')}${pct(bias)} is systematic — it won't go away with a larger sample or more repetitions.`;
+    biasDesc.textContent  = `Even after 100 simulations, the center of the distribution sits at ${pct(mean)}, not at the true value (${pct(trueRate)}). The bias of ${(bias >= 0 ? '+' : '')}${pct(bias)} is systematic — it won't go away with a larger sample or more repetitions.`;
   }
+  biasExp.classList.remove('hidden');
 
-  document.getElementById('biasExplanation').classList.remove('hidden');
+  // Show distribution — unhide first so canvas has real width
+  document.getElementById('distContainer').classList.remove('hidden');
+  resizeDistCanvas();
+  drawDistribution(results, trueRate, mean);
 }
 
 function drawDistribution(results, trueRate, mean) {
-  resizeDistCanvas();
   const W = distCanvas.width, H = distCanvas.height;
   dctx.clearRect(0, 0, W, H);
 
-  const bins = 20;
-  const minV = 0, maxV = 1;
-  const binW = (maxV - minV) / bins;
+  const bins   = 20;
+  const binW   = 1 / bins;
   const counts = Array(bins).fill(0);
-  results.forEach(r => {
-    const b = Math.min(bins - 1, Math.floor((r - minV) / binW));
-    counts[b]++;
-  });
+  results.forEach(r => { counts[Math.min(bins - 1, Math.floor(r / binW))]++; });
   const maxCount = Math.max(...counts);
 
-  const pad = { l: 40, r: 20, t: 16, b: 30 };
+  const pad   = { l: 40, r: 20, t: 16, b: 30 };
   const plotW = W - pad.l - pad.r;
   const plotH = H - pad.t - pad.b;
-  const barW = plotW / bins - 1;
-  const mi = METHOD_INFO[state.method];
+  const mi    = METHOD_INFO[state.method];
 
   counts.forEach((c, i) => {
-    const x = pad.l + i * (plotW / bins);
+    const x    = pad.l + i * (plotW / bins);
     const barH = (c / maxCount) * plotH;
-    const y = pad.t + plotH - barH;
     dctx.fillStyle = mi.color + '99';
-    dctx.fillRect(x, y, barW, barH);
+    dctx.fillRect(x, pad.t + plotH - barH, plotW / bins - 1, barH);
   });
 
-  // True rate line
-  const trueX = pad.l + (trueRate - minV) / (maxV - minV) * plotW;
-  dctx.strokeStyle = '#4ECCA3';
-  dctx.lineWidth = 2;
-  dctx.setLineDash([5, 4]);
-  dctx.beginPath(); dctx.moveTo(trueX, pad.t); dctx.lineTo(trueX, pad.t + plotH);
-  dctx.stroke();
+  const trueX = pad.l + trueRate * plotW;
+  dctx.strokeStyle = '#4ECCA3'; dctx.lineWidth = 2; dctx.setLineDash([5, 4]);
+  dctx.beginPath(); dctx.moveTo(trueX, pad.t); dctx.lineTo(trueX, pad.t + plotH); dctx.stroke();
 
-  // Mean line
-  const meanX = pad.l + (mean - minV) / (maxV - minV) * plotW;
-  dctx.strokeStyle = mi.color;
-  dctx.setLineDash([]);
-  dctx.lineWidth = 2.5;
-  dctx.beginPath(); dctx.moveTo(meanX, pad.t); dctx.lineTo(meanX, pad.t + plotH);
-  dctx.stroke();
+  const meanX = pad.l + mean * plotW;
+  dctx.strokeStyle = mi.color; dctx.lineWidth = 2.5; dctx.setLineDash([]);
+  dctx.beginPath(); dctx.moveTo(meanX, pad.t); dctx.lineTo(meanX, pad.t + plotH); dctx.stroke();
 
-  // X axis labels
-  dctx.fillStyle = '#8AA0B8';
-  dctx.font = '10px JetBrains Mono, monospace';
-  dctx.textAlign = 'center';
-  [0, 0.25, 0.5, 0.75, 1].forEach(v => {
-    const x = pad.l + v * plotW;
-    dctx.fillText(`${Math.round(v * 100)}%`, x, H - 8);
-  });
+  dctx.fillStyle = '#8AA0B8'; dctx.font = '10px JetBrains Mono, monospace'; dctx.textAlign = 'center';
+  [0, 0.25, 0.5, 0.75, 1].forEach(v => dctx.fillText(`${Math.round(v * 100)}%`, pad.l + v * plotW, H - 8));
 
-  // Annotations
-  const annotDiv = document.getElementById('distAnnotations');
-  annotDiv.innerHTML = `
-    <span class="dist-annot"><span class="annot-line" style="background:#4ECCA3;display:inline-block;border-top:2px dashed #4ECCA3"></span> True rate (${pct(trueRate)})</span>
-    <span class="dist-annot"><span class="annot-line" style="background:${mi.color};display:inline-block;border-top:2.5px solid ${mi.color}"></span> Avg sample result (${pct(mean)})</span>
+  document.getElementById('distAnnotations').innerHTML = `
+    <span class="dist-annot"><span class="annot-line" style="display:inline-block;border-top:2px dashed #4ECCA3;width:20px"></span> True rate (${pct(trueRate)})</span>
+    <span class="dist-annot"><span class="annot-line" style="display:inline-block;border-top:2.5px solid ${mi.color};width:20px"></span> Avg sample result (${pct(mean)})</span>
     <span class="dist-annot">Bias: <strong style="color:${Math.abs(mean - trueRate) < 0.03 ? '#4ECCA3' : '#FF6B6B'}">${mean >= trueRate ? '+' : ''}${pct(mean - trueRate)}</strong></span>
   `;
 }
 
-// ── UI Bindings ───────────────────────────────────────────────
-function pct(v) {
-  return (v * 100).toFixed(1) + '%';
-}
-
-function getMethodExplainerText(method) {
-  const m = METHOD_INFO[method];
-  const extras = {
-    srs: 'In this simulation, each dot has an equal chance of being selected — like drawing names from a hat.',
-    stratified: 'This simulation samples proportionally from Group A and Group B, ensuring both are represented.',
-    cluster: 'Random clusters (groups) are selected, and every member of that cluster is included.',
-    convenience: 'Group A (more accessible) members are much more likely to be chosen.',
-    voluntary: 'People with strong YES opinions are more likely to self-select into this sample.',
-  };
-  return m.desc + ' ' + extras[method];
-}
-
-function updateMethodExplainer() {
-  document.getElementById('methodExplainer').textContent = getMethodExplainerText(state.method);
-}
-
-function updateSamplePct() {
-  const pctVal = ((state.sampleSize / state.popSize) * 100).toFixed(1);
-  document.getElementById('samplePct').textContent = `= ${pctVal}% of population`;
-}
-
-function bindSlider(id, valId, stateKey, transform, callback) {
-  const el = document.getElementById(id);
-  const val = document.getElementById(valId);
-  el.addEventListener('input', () => {
-    const v = transform ? transform(+el.value) : +el.value;
-    state[stateKey] = v;
-    val.textContent = transform ? val.textContent : el.value + (stateKey === 'popSize' || stateKey === 'sampleSize' ? '' : '%');
-    if (callback) callback(v, el.value);
-  });
-}
-
-// Sliders
-document.getElementById('popSize').addEventListener('input', function() {
-  state.popSize = +this.value;
-  document.getElementById('popSizeVal').textContent = this.value;
-  updateSamplePct();
-  // clamp sample
-  if (state.sampleSize > state.popSize) {
-    state.sampleSize = Math.min(300, state.popSize);
-    document.getElementById('sampleSize').value = state.sampleSize;
-    document.getElementById('sampleSizeVal').textContent = state.sampleSize;
-  }
-});
-document.getElementById('sampleSize').addEventListener('input', function() {
-  state.sampleSize = +this.value;
-  document.getElementById('sampleSizeVal').textContent = this.value;
-  updateSamplePct();
-});
-document.getElementById('strataRatio').addEventListener('input', function() {
-  state.strataRatio = +this.value / 100;
-  document.getElementById('strataRatioVal').textContent = this.value + '%';
-  document.getElementById('strataComplement').textContent = (100 - +this.value) + '%';
-});
-document.getElementById('strataARate').addEventListener('input', function() {
-  state.strataARateVal = +this.value;
-  document.getElementById('strataARateVal').textContent = this.value + '%';
-});
-document.getElementById('strataBRate').addEventListener('input', function() {
-  state.strataBRateVal = +this.value;
-  document.getElementById('strataBRateVal').textContent = this.value + '%';
-});
-
-// Question presets
-document.querySelectorAll('.preset-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    const q = this.dataset.q;
-    state.question = q;
-    if (q === 'custom') {
-      document.getElementById('customQuestionWrap').classList.remove('hidden');
-      document.getElementById('questionDisplay').classList.add('hidden');
-    } else {
-      document.getElementById('customQuestionWrap').classList.add('hidden');
-      document.getElementById('questionDisplay').classList.remove('hidden');
-      const preset = QUESTIONS[q];
-      document.getElementById('questionDisplay').textContent = preset.text;
-      state.strataARateVal = preset.trueRateA;
-      state.strataBRateVal = preset.trueRateB;
-      document.getElementById('strataARate').value = preset.trueRateA;
-      document.getElementById('strataARateVal').textContent = preset.trueRateA + '%';
-      document.getElementById('strataBRate').value = preset.trueRateB;
-      document.getElementById('strataBRateVal').textContent = preset.trueRateB + '%';
-    }
-  });
-});
-
-// Method cards
-document.querySelectorAll('.method-card').forEach(card => {
-  card.addEventListener('click', function() {
-    document.querySelectorAll('.method-card').forEach(c => c.classList.remove('active'));
-    this.classList.add('active');
-    state.method = this.dataset.method;
-    updateMethodExplainer();
-  });
-});
-
-// Run button
-document.getElementById('runBtn').addEventListener('click', async function() {
-  if (state.animating) return;
-  state.animating = true;
-  this.textContent = '⏳ Sampling...';
-  this.disabled = true;
-  document.getElementById('canvasOverlay').classList.add('hidden');
-
-  generatePopulation();
-  const sample = getSample();
-  state.lastSample = sample;
-
-  await animateSample(sample);
-
-  const results = computeResults(sample);
-  showResults(results, sample);
-
-  // Reset variability
-  document.getElementById('valVariability').textContent = '—';
-  document.getElementById('distContainer').classList.add('hidden');
-
-  this.textContent = '▶ Run Again';
-  this.disabled = false;
-  state.animating = false;
-});
-
-// Run many button
-document.getElementById('runManyBtn').addEventListener('click', function() {
-  if (state.animating) return;
-  if (!state.population.length) generatePopulation();
-  document.getElementById('canvasOverlay').classList.add('hidden');
-  runMany(100);
-});
-
-// Reset button
-document.getElementById('resetBtn').addEventListener('click', function() {
-  state.population = [];
-  state.lastSample = [];
-  state.manyRunResults = [];
-
-  ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
-  document.getElementById('canvasOverlay').classList.remove('hidden');
-  document.getElementById('distContainer').classList.add('hidden');
-  document.getElementById('biasExplanation').classList.add('hidden');
-  document.getElementById('inferencePanel').classList.add('hidden');
-
-  ['valPopTruth','valSampleResult','valBias','valVariability'].forEach(id => {
-    document.getElementById(id).textContent = '—';
-  });
-  document.getElementById('barPopTruth').style.width = '0%';
-  document.getElementById('barSampleResult').style.width = '0%';
-  document.getElementById('canvasLegend').innerHTML = '';
-  document.getElementById('runBtn').textContent = '▶ Run Simulation';
-});
-
 // ── Hero Animation ────────────────────────────────────────────
-let heroDots = [];
+let heroDots  = [];
 let heroFrame = 0;
 
 function initHero() {
@@ -800,7 +515,6 @@ function animateHero() {
   hctx.clearRect(0, 0, W, H);
   heroFrame++;
 
-  // Cycle: every 120 frames, "sample" some dots
   if (heroFrame % 120 === 0) {
     heroDots.forEach(d => d.sampled = false);
     const n = Math.floor(heroDots.length * 0.3);
@@ -809,21 +523,16 @@ function animateHero() {
 
   heroDots.forEach(d => {
     const pulse = 1 + 0.15 * Math.sin(d.phase + heroFrame * d.speed);
-    const alpha = d.sampled ? 1 : 0.35;
-    const color = d.sampled ? '#4ECCA3' : (d.group === 'A' ? '#4ECCA3' : '#FF6B6B');
-
-    hctx.globalAlpha = alpha;
+    hctx.globalAlpha = d.sampled ? 1 : 0.35;
     hctx.beginPath();
     hctx.arc(d.x, d.y, d.r * pulse, 0, Math.PI * 2);
-    hctx.fillStyle = color;
+    hctx.fillStyle = d.sampled ? '#4ECCA3' : (d.group === 'A' ? '#4ECCA3' : '#FF6B6B');
     hctx.fill();
-
     if (d.sampled) {
       hctx.globalAlpha = 0.3;
       hctx.beginPath();
       hctx.arc(d.x, d.y, d.r * pulse + 4, 0, Math.PI * 2);
-      hctx.strokeStyle = '#4ECCA3';
-      hctx.lineWidth = 1;
+      hctx.strokeStyle = '#4ECCA3'; hctx.lineWidth = 1;
       hctx.stroke();
     }
   });
@@ -831,52 +540,205 @@ function animateHero() {
   requestAnimationFrame(animateHero);
 }
 
-// ── Init ──────────────────────────────────────────────────────
-updateMethodExplainer();
-updateSamplePct();
-initHero();
-animateHero();
+// ── UI helpers ────────────────────────────────────────────────
+function getMethodExplainerText(method) {
+  const extras = {
+    srs:         'In this simulation, each dot has an equal chance of being selected — like drawing names from a hat.',
+    stratified:  'This simulation samples proportionally from Group A and Group B, ensuring both are represented.',
+    cluster:     'Random clusters (groups) are selected, and every member of that cluster is included.',
+    convenience: 'Group A (more accessible) members are much more likely to be chosen.',
+    voluntary:   'People with strong YES opinions are more likely to self-select into this sample.',
+  };
+  return METHOD_INFO[method].desc + ' ' + extras[method];
+}
 
-// Initial population draw (without sampling)
-generatePopulation();
-drawPopulation(false);
-document.getElementById('canvasOverlay').classList.remove('hidden');
+function updateMethodExplainer() {
+  document.getElementById('methodExplainer').textContent = getMethodExplainerText(state.method);
+}
 
-// CI level buttons
-document.querySelectorAll('.ci-level-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('.ci-level-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    state.ciLevel = parseFloat(this.dataset.level);
-    // Re-render CI if a result is already showing
-    if (state.lastSample.length) {
-      const results = computeResults(state.lastSample);
-      showResults(results, state.lastSample);
+function updateSamplePct() {
+  document.getElementById('samplePct').textContent =
+    `= ${((state.sampleSize / state.popSize) * 100).toFixed(1)}% of population`;
+}
+
+// ── Init (runs after DOM is ready) ───────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+
+  // Grab canvases
+  mainCanvas  = document.getElementById('mainCanvas');
+  ctx         = mainCanvas.getContext('2d');
+  distCanvas  = document.getElementById('distCanvas');
+  dctx        = distCanvas.getContext('2d');
+  heroCanvas  = document.getElementById('heroCanvas');
+  hctx        = heroCanvas.getContext('2d');
+
+  // Size main canvas then draw initial population
+  resizeMainCanvas();
+  generatePopulation();
+  drawPopulation(false);
+  document.getElementById('canvasOverlay').classList.remove('hidden');
+
+  // Hero
+  initHero();
+  animateHero();
+
+  // UI state
+  updateMethodExplainer();
+  updateSamplePct();
+
+  // ── Sliders ──
+  document.getElementById('popSize').addEventListener('input', function () {
+    state.popSize = +this.value;
+    document.getElementById('popSizeVal').textContent = this.value;
+    updateSamplePct();
+    if (state.sampleSize > state.popSize) {
+      state.sampleSize = Math.min(300, state.popSize);
+      document.getElementById('sampleSize').value = state.sampleSize;
+      document.getElementById('sampleSizeVal').textContent = state.sampleSize;
     }
   });
-});
-
-// Info Card Dropdowns
-document.querySelectorAll('.info-card').forEach(card => {
-  function toggle(e) {
-    if (e.target.closest('.card-dropdown')) return;
-    const isOpen = card.getAttribute('aria-expanded') === 'true';
-    document.querySelectorAll('.info-card').forEach(c => c.setAttribute('aria-expanded', 'false'));
-    card.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-  }
-  card.addEventListener('click', toggle);
-  card.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(e); }
+  document.getElementById('sampleSize').addEventListener('input', function () {
+    state.sampleSize = +this.value;
+    document.getElementById('sampleSizeVal').textContent = this.value;
+    updateSamplePct();
   });
-});
+  document.getElementById('strataRatio').addEventListener('input', function () {
+    state.strataRatio = +this.value / 100;
+    document.getElementById('strataRatioVal').textContent   = this.value + '%';
+    document.getElementById('strataComplement').textContent = (100 - +this.value) + '%';
+  });
+  document.getElementById('strataARate').addEventListener('input', function () {
+    state.strataARateVal = +this.value;
+    document.getElementById('strataARateVal').textContent = this.value + '%';
+  });
+  document.getElementById('strataBRate').addEventListener('input', function () {
+    state.strataBRateVal = +this.value;
+    document.getElementById('strataBRateVal').textContent = this.value + '%';
+  });
 
-window.addEventListener('resize', () => {
-  resizeMainCanvas();
-  layoutPopulation(state.population);
-  drawPopulation(state.lastSample.length > 0);
-  if (state.manyRunResults.length) {
-    const trueRate = getTrueRate();
-    const mean = state.manyRunResults.reduce((a,b)=>a+b,0)/state.manyRunResults.length;
-    drawDistribution(state.manyRunResults, trueRate, mean);
-  }
-});
+  // ── Question presets ──
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      const q = this.dataset.q;
+      state.question = q;
+      if (q === 'custom') {
+        document.getElementById('customQuestionWrap').classList.remove('hidden');
+        document.getElementById('questionDisplay').classList.add('hidden');
+      } else {
+        document.getElementById('customQuestionWrap').classList.add('hidden');
+        document.getElementById('questionDisplay').classList.remove('hidden');
+        const preset = QUESTIONS[q];
+        document.getElementById('questionDisplay').textContent  = preset.text;
+        state.strataARateVal = preset.trueRateA;
+        state.strataBRateVal = preset.trueRateB;
+        document.getElementById('strataARate').value            = preset.trueRateA;
+        document.getElementById('strataARateVal').textContent   = preset.trueRateA + '%';
+        document.getElementById('strataBRate').value            = preset.trueRateB;
+        document.getElementById('strataBRateVal').textContent   = preset.trueRateB + '%';
+      }
+    });
+  });
+
+  // ── Method cards ──
+  document.querySelectorAll('.method-card').forEach(card => {
+    card.addEventListener('click', function () {
+      document.querySelectorAll('.method-card').forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+      state.method = this.dataset.method;
+      updateMethodExplainer();
+    });
+  });
+
+  // ── Run button ──
+  document.getElementById('runBtn').addEventListener('click', async function () {
+    if (state.animating) return;
+    state.animating = true;
+    this.textContent = '⏳ Sampling...';
+    this.disabled    = true;
+    document.getElementById('canvasOverlay').classList.add('hidden');
+
+    generatePopulation();
+    const sample = getSample();
+    state.lastSample = sample;
+    await animateSample(sample);
+
+    const results = computeResults(sample);
+    showResults(results, sample);
+
+    document.getElementById('valVariability').textContent = '—';
+    document.getElementById('distContainer').classList.add('hidden');
+
+    this.textContent = '▶ Run Again';
+    this.disabled    = false;
+    state.animating  = false;
+  });
+
+  // ── Run 100× button ──
+  document.getElementById('runManyBtn').addEventListener('click', function () {
+    if (state.animating) return;
+    if (!state.population.length) generatePopulation();
+    document.getElementById('canvasOverlay').classList.add('hidden');
+    runMany(100);
+  });
+
+  // ── Reset button ──
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    state.population     = [];
+    state.lastSample     = [];
+    state.manyRunResults = [];
+
+    ctx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+    document.getElementById('canvasOverlay').classList.remove('hidden');
+    document.getElementById('distContainer').classList.add('hidden');
+    document.getElementById('biasExplanation').classList.add('hidden');
+    document.getElementById('inferencePanel').classList.add('hidden');
+    ['valPopTruth', 'valSampleResult', 'valBias', 'valVariability']
+      .forEach(id => { document.getElementById(id).textContent = '—'; });
+    document.getElementById('barPopTruth').style.width      = '0%';
+    document.getElementById('barSampleResult').style.width  = '0%';
+    document.getElementById('canvasLegend').innerHTML       = '';
+    document.getElementById('runBtn').textContent           = '▶ Run Simulation';
+  });
+
+  // ── CI level buttons ──
+  document.querySelectorAll('.ci-level-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.ci-level-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      state.ciLevel = parseFloat(this.dataset.level);
+      if (state.lastSample.length) {
+        showResults(computeResults(state.lastSample), state.lastSample);
+      }
+    });
+  });
+
+  // ── Info card dropdowns ──
+  document.querySelectorAll('.info-card').forEach(card => {
+    function toggle(e) {
+      if (e.target.closest('.card-dropdown')) return;
+      const isOpen = card.getAttribute('aria-expanded') === 'true';
+      document.querySelectorAll('.info-card').forEach(c => c.setAttribute('aria-expanded', 'false'));
+      card.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    }
+    card.addEventListener('click', toggle);
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(e); }
+    });
+  });
+
+  // ── Resize ──
+  window.addEventListener('resize', () => {
+    resizeMainCanvas();
+    if (state.population.length) layoutPopulation(state.population);
+    drawPopulation(state.lastSample.length > 0);
+    if (state.manyRunResults.length) {
+      const trueRate = getTrueRate();
+      const mean     = state.manyRunResults.reduce((a, b) => a + b, 0) / state.manyRunResults.length;
+      resizeDistCanvas();
+      drawDistribution(state.manyRunResults, trueRate, mean);
+    }
+  });
+
+}); // end DOMContentLoaded
