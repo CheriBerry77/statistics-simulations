@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SampleSim — AP Statistics Survey Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-mark">∑</span>
+        <span class="logo-text">SampleSim</span>
+      </div>
+      <nav class="header-nav">
+        <a href="#simulator" class="nav-link active">Simulator</a>
+        <a href="#concepts" class="nav-link">Concepts</a>
+        <a href="#glossary" class="nav-link">Glossary</a>
+      </nav>
+      <div class="header-badge">AP Statistics</div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <p class="hero-eyebrow">Interactive Learning Tool</p>
+      <h1 class="hero-title">Does <em>how</em> you sample<br/>change what you find?</h1>
+      <p class="hero-sub">Design a survey, choose a sampling method, and watch bias emerge — or disappear — in real time.</p>
+      <a href="#simulator" class="hero-cta">Start Simulating</a>
+    </div>
+    <div class="hero-mini-canvas">
+      <canvas id="heroCanvas" width="340" height="220"></canvas>
+    </div>
+  </section>
+
+  <!-- Main Simulator -->
+  <section class="simulator-section" id="simulator">
+    <div class="simulator-grid">
+
+      <!-- LEFT: Controls Panel -->
+      <aside class="controls-panel">
+        <div class="panel-header">
+          <span class="panel-label">Survey Design</span>
+        </div>
+
+        <!-- Survey Question -->
+        <div class="control-group">
+          <label class="control-label">Survey Question</label>
+          <div class="question-presets">
+            <button class="preset-btn active" data-q="support">Political Support</button>
+            <button class="preset-btn" data-q="health">Health Habits</button>
+            <button class="preset-btn" data-q="income">Income Level</button>
+            <button class="preset-btn" data-q="custom">Custom</button>
+          </div>
+          <div class="question-display" id="questionDisplay">
+            "Do you support the proposed school budget increase?"
+          </div>
+          <div class="custom-question-wrap hidden" id="customQuestionWrap">
+            <input type="text" id="customQuestion" class="text-input" placeholder="Type your yes/no question..." maxlength="80" />
+            <div class="custom-params">
+              <div class="param-row">
+                <label>True YES rate in population</label>
+                <div class="slider-row">
+                  <input type="range" id="customTrueRate" min="5" max="95" value="50" class="slider" />
+                  <span class="slider-val" id="customTrueRateVal">50%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Population Setup -->
+        <div class="control-group">
+          <label class="control-label">Population</label>
+          <div class="param-row">
+            <label>Size</label>
+            <div class="slider-row">
+              <input type="range" id="popSize" min="100" max="2000" step="100" value="500" class="slider" />
+              <span class="slider-val" id="popSizeVal">500</span>
+            </div>
+          </div>
+          <div class="strata-info" id="strataInfo">
+            <div class="strata-row">
+              <span class="strata-dot" style="background:#4ECCA3"></span>
+              <label>Group A (e.g. Urban)</label>
+              <div class="slider-row">
+                <input type="range" id="strataRatio" min="10" max="90" value="40" class="slider" />
+                <span class="slider-val" id="strataRatioVal">40%</span>
+              </div>
+            </div>
+            <div class="strata-row">
+              <span class="strata-dot" style="background:#FF6B6B"></span>
+              <label>Group B (e.g. Rural)</label>
+              <span class="strata-complement" id="strataComplement">60%</span>
+            </div>
+            <div class="strata-truth">
+              <div class="truth-mini">
+                <span class="strata-dot" style="background:#4ECCA3"></span>
+                <label>Group A YES rate</label>
+                <div class="slider-row">
+                  <input type="range" id="strataARate" min="5" max="95" value="70" class="slider" />
+                  <span class="slider-val" id="strataARateVal">70%</span>
+                </div>
+              </div>
+              <div class="truth-mini">
+                <span class="strata-dot" style="background:#FF6B6B"></span>
+                <label>Group B YES rate</label>
+                <div class="slider-row">
+                  <input type="range" id="strataBRate" min="5" max="95" value="30" class="slider" />
+                  <span class="slider-val" id="strataBRateVal">30%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sample Size -->
+        <div class="control-group">
+          <label class="control-label">Sample Size</label>
+          <div class="param-row">
+            <label>n =</label>
+            <div class="slider-row">
+              <input type="range" id="sampleSize" min="10" max="300" step="5" value="50" class="slider" />
+              <span class="slider-val" id="sampleSizeVal">50</span>
+            </div>
+          </div>
+          <div class="sample-pct" id="samplePct">= 10.0% of population</div>
+        </div>
+
+        <!-- Sampling Method -->
+        <div class="control-group">
+          <label class="control-label">Sampling Method</label>
+          <div class="method-cards">
+            <button class="method-card active" data-method="srs">
+              <span class="method-icon">🎲</span>
+              <span class="method-name">Simple Random</span>
+              <span class="method-code">SRS</span>
+            </button>
+            <button class="method-card" data-method="stratified">
+              <span class="method-icon">🗂</span>
+              <span class="method-name">Stratified</span>
+              <span class="method-code">STR</span>
+            </button>
+            <button class="method-card" data-method="cluster">
+              <span class="method-icon">🔵</span>
+              <span class="method-name">Cluster</span>
+              <span class="method-code">CLU</span>
+            </button>
+            <button class="method-card" data-method="convenience">
+              <span class="method-icon">👋</span>
+              <span class="method-name">Convenience</span>
+              <span class="method-code">CNV</span>
+            </button>
+            <button class="method-card" data-method="voluntary">
+              <span class="method-icon">📢</span>
+              <span class="method-name">Voluntary Response</span>
+              <span class="method-code">VRS</span>
+            </button>
+          </div>
+          <div class="method-explainer" id="methodExplainer"></div>
+        </div>
+
+        <!-- Run Controls -->
+        <div class="run-controls">
+          <button class="run-btn" id="runBtn">▶ Run Simulation</button>
+          <button class="run-many-btn" id="runManyBtn">Run 100×</button>
+          <button class="reset-btn" id="resetBtn">Reset</button>
+        </div>
+      </aside>
+
+      <!-- RIGHT: Visualization + Results -->
+      <main class="viz-panel">
+
+        <!-- Population Canvas -->
+        <div class="canvas-container">
+          <div class="canvas-header">
+            <span class="canvas-title">Population</span>
+            <div class="canvas-legend" id="canvasLegend"></div>
+          </div>
+          <canvas id="mainCanvas"></canvas>
+          <div class="canvas-overlay" id="canvasOverlay">
+            <p>Configure your survey and click <strong>Run Simulation</strong></p>
+          </div>
+        </div>
+
+        <!-- Results Dashboard -->
+        <div class="results-grid" id="resultsGrid">
+          <div class="result-card" id="cardPopTruth">
+            <div class="card-label">Population Truth</div>
+            <div class="card-value" id="valPopTruth">—</div>
+            <div class="card-sub">actual parameter (μ)</div>
+            <div class="card-bar-wrap"><div class="card-bar truth-bar" id="barPopTruth"></div></div>
+          </div>
+          <div class="result-card" id="cardSampleResult">
+            <div class="card-label">Sample Result</div>
+            <div class="card-value" id="valSampleResult">—</div>
+            <div class="card-sub">this sample's statistic (p̂)</div>
+            <div class="card-bar-wrap"><div class="card-bar sample-bar" id="barSampleResult"></div></div>
+          </div>
+          <div class="result-card bias-card" id="cardBias">
+            <div class="card-label">Estimated Bias</div>
+            <div class="card-value" id="valBias">—</div>
+            <div class="card-sub">sample − population</div>
+            <div class="bias-indicator" id="biasIndicator"></div>
+          </div>
+          <div class="result-card" id="cardVariability">
+            <div class="card-label">Variability (after 100×)</div>
+            <div class="card-value" id="valVariability">—</div>
+            <div class="card-sub">std dev of sample proportions</div>
+          </div>
+        </div>
+
+        <!-- Distribution Plot (after many runs) -->
+        <div class="dist-container hidden" id="distContainer">
+          <div class="dist-header">
+            <span class="canvas-title">Sampling Distribution (100 simulations)</span>
+            <span class="dist-sub">Each bar = one sample's result</span>
+          </div>
+          <canvas id="distCanvas" height="160"></canvas>
+          <div class="dist-annotations" id="distAnnotations"></div>
+        </div>
+
+        <!-- Bias Explanation -->
+        <div class="bias-explanation hidden" id="biasExplanation">
+          <div class="bias-icon" id="biasIcon">⚠️</div>
+          <div class="bias-text">
+            <strong id="biasTitle"></strong>
+            <p id="biasDesc"></p>
+          </div>
+        </div>
+
+        <!-- Inference Panel -->
+        <div class="inference-panel hidden" id="inferencePanel">
+          <div class="inference-header">95% Confidence Interval</div>
+          <div class="ci-visual" id="ciVisual"></div>
+          <div class="ci-text" id="ciText"></div>
+          <div class="inference-warning" id="inferenceWarning"></div>
+        </div>
+
+      </main>
+    </div>
+  </section>
+
+  <!-- Concepts Section -->
+  <section class="concepts-section" id="concepts">
+    <div class="section-inner">
+      <h2 class="section-title">Core Concepts</h2>
+      <div class="concepts-grid">
+        <div class="concept-card">
+          <div class="concept-icon">🎯</div>
+          <h3>Bias</h3>
+          <p>A consistent, systematic error in which a sample over- or under-represents the population. Bias comes from the <em>method</em>, not bad luck.</p>
+          <div class="concept-detail">
+            <strong>Watch for:</strong> Convenience and voluntary response sampling almost always produce bias. SRS and stratified sampling minimize it.
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-icon">📊</div>
+          <h3>Variability</h3>
+          <p>How spread out sample results are across many repetitions. Larger samples produce lower variability — the results cluster near the truth.</p>
+          <div class="concept-detail">
+            <strong>Try it:</strong> Run 100 simulations with n=20, then n=200. Watch the distribution compress.
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-icon">🗺</div>
+          <h3>Sampling Distribution</h3>
+          <p>The distribution of all possible sample statistics from a population. The 100× view in this simulator shows you what one looks like in practice.</p>
+          <div class="concept-detail">
+            <strong>Key insight:</strong> The center of the sampling distribution reveals bias. The spread reveals variability.
+          </div>
+        </div>
+        <div class="concept-card">
+          <div class="concept-icon">🔬</div>
+          <h3>Inference</h3>
+          <p>Using sample data to draw conclusions about the population. Only valid when the sample is representative — which requires a good sampling method.</p>
+          <div class="concept-detail">
+            <strong>Remember:</strong> A confidence interval is meaningless if the sample is biased.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Method Comparison Table -->
+  <section class="compare-section">
+    <div class="section-inner">
+      <h2 class="section-title">Sampling Method Comparison</h2>
+      <div class="compare-table-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>How it works</th>
+              <th>Bias risk</th>
+              <th>Practical?</th>
+              <th>Best for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="method-tag srs">SRS</span></td>
+              <td>Every individual has an equal chance of selection</td>
+              <td><span class="risk low">Low</span></td>
+              <td>Moderate</td>
+              <td>Gold standard; textbook default</td>
+            </tr>
+            <tr>
+              <td><span class="method-tag str">Stratified</span></td>
+              <td>Divide into groups, SRS within each group</td>
+              <td><span class="risk low">Low</span></td>
+              <td>Moderate</td>
+              <td>When groups differ meaningfully</td>
+            </tr>
+            <tr>
+              <td><span class="method-tag clu">Cluster</span></td>
+              <td>Randomly select whole groups (clusters)</td>
+              <td><span class="risk med">Medium</span></td>
+              <td>High</td>
+              <td>Geographically spread populations</td>
+            </tr>
+            <tr>
+              <td><span class="method-tag cnv">Convenience</span></td>
+              <td>Sample whoever is easiest to reach</td>
+              <td><span class="risk high">High</span></td>
+              <td>Very high</td>
+              <td>Avoid for inference</td>
+            </tr>
+            <tr>
+              <td><span class="method-tag vrs">Voluntary Response</span></td>
+              <td>People self-select into the sample</td>
+              <td><span class="risk high">High</span></td>
+              <td>Very high</td>
+              <td>Avoid for inference</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Glossary -->
+  <section class="glossary-section" id="glossary">
+    <div class="section-inner">
+      <h2 class="section-title">Glossary</h2>
+      <div class="glossary-grid">
+        <div class="glossary-item"><dt>Population (N)</dt><dd>The entire group you want information about.</dd></div>
+        <div class="glossary-item"><dt>Sample (n)</dt><dd>The subset of the population actually measured.</dd></div>
+        <div class="glossary-item"><dt>Parameter</dt><dd>A number describing the population (e.g. true proportion p).</dd></div>
+        <div class="glossary-item"><dt>Statistic</dt><dd>A number computed from the sample (e.g. sample proportion p̂).</dd></div>
+        <div class="glossary-item"><dt>Sampling Frame</dt><dd>The list of individuals from which the sample is drawn.</dd></div>
+        <div class="glossary-item"><dt>Undercoverage</dt><dd>When some groups are underrepresented in the sampling frame.</dd></div>
+        <div class="glossary-item"><dt>Non-response Bias</dt><dd>When individuals who don't respond differ from those who do.</dd></div>
+        <div class="glossary-item"><dt>Response Bias</dt><dd>When the question wording or context distorts answers.</dd></div>
+        <div class="glossary-item"><dt>Margin of Error</dt><dd>The ± range in a confidence interval: z* × √(p̂(1−p̂)/n).</dd></div>
+        <div class="glossary-item"><dt>Central Limit Theorem</dt><dd>For large n, p̂ is approximately Normal regardless of population shape.</dd></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>SampleSim — Built for AP Statistics students. Simulations are for educational purposes.</p>
+      <p class="footer-formula">p̂ ~ N(p, √(p(1−p)/n)) &nbsp;|&nbsp; Bias = E[p̂] − p</p>
+    </div>
+  </footer>
+
+  <script src="sim.js"></script>
+</body>
+</html>
