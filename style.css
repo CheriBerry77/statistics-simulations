@@ -447,9 +447,67 @@ body {
   padding: 1rem 1.1rem;
   margin-bottom: 1rem;
 }
+.inference-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+}
 .inference-header {
   font-family: var(--display); font-weight: 600;
-  font-size: 0.85rem; margin-bottom: 0.75rem; color: var(--text2);
+  font-size: 0.85rem; color: var(--text2);
+}
+.ci-level-selector {
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.ci-level-label {
+  font-family: var(--mono); font-size: 0.68rem;
+  color: var(--text2); text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.ci-level-btns {
+  display: flex; gap: 0.3rem;
+}
+.ci-level-btn {
+  background: var(--navy3);
+  color: var(--text2);
+  border: 1px solid var(--border2);
+  font-family: var(--mono); font-size: 0.75rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ci-level-btn:hover {
+  border-color: var(--border);
+  color: var(--text);
+}
+.ci-level-btn.active {
+  background: rgba(107, 142, 255, 0.18);
+  border-color: #6B8EFF;
+  color: #6B8EFF;
+}
+.ci-zstar-row {
+  display: flex; align-items: baseline; gap: 0.45rem;
+  margin-bottom: 0.65rem;
+  padding: 0.4rem 0.7rem;
+  background: var(--navy3);
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+}
+.ci-zstar-label {
+  font-family: var(--mono); font-size: 0.75rem;
+  color: var(--text2);
+}
+.ci-zstar-val {
+  font-family: var(--mono); font-size: 1rem;
+  font-weight: 600; color: #6B8EFF;
+}
+.ci-zstar-note {
+  font-size: 0.72rem; color: var(--text2);
+  font-style: italic;
 }
 .ci-visual {
   height: 36px; position: relative;
