@@ -75,7 +75,19 @@ const METHOD_INFO = {
   }
 };
 
-// ── State ─────────────────────────────────────────────────────
+// ── Confidence Level Config ───────────────────────────────────
+const Z_STARS = {
+  0.80: { z: 1.282, label: '80%' },
+  0.90: { z: 1.645, label: '90%' },
+  0.95: { z: 1.960, label: '95%' },
+  0.99: { z: 2.576, label: '99%' },
+};
+state.ciLevel = 0.95;
+
+function getZStar() { return Z_STARS[state.ciLevel].z; }
+function getCILabel() { return Z_STARS[state.ciLevel].label; }
+
+
 let state = {
   question: 'support',
   popSize: 500,
@@ -394,20 +406,27 @@ function showResults(results, sample) {
 
   // Confidence Interval
   const se = Math.sqrt((sampleRate * (1 - sampleRate)) / n);
-  const moe = 1.96 * se;
+  const zStar = getZStar();
+  const moe = zStar * se;
   const lower = Math.max(0, sampleRate - moe);
   const upper = Math.min(1, sampleRate + moe);
+  const ciLabel = getCILabel();
   const infPanel = document.getElementById('inferencePanel');
   infPanel.classList.remove('hidden');
+  document.getElementById('inferenceHeader').textContent = `${ciLabel} Confidence Interval`;
+  document.getElementById('ciZstarVal').textContent = zStar.toFixed(3);
+  document.getElementById('ciZstarRow').querySelector('.ci-zstar-note').textContent = `critical value for ${ciLabel} CI`;
   document.getElementById('ciText').textContent = `${pct(sampleRate)} ± ${pct(moe)}  →  (${pct(lower)}, ${pct(upper)})`;
   drawCI(lower, upper, sampleRate, trueRate);
   const infWarn = document.getElementById('inferenceWarning');
   if (mi.biasType !== 'none') {
     infWarn.textContent = '⚠️ This CI is misleading — confidence intervals assume an unbiased sampling method. Bias cannot be fixed with a larger sample.';
+    infWarn.style.color = '';
   } else {
+    const missRate = (100 - parseFloat(ciLabel)).toFixed(0);
     infWarn.textContent = trueRate >= lower && trueRate <= upper
-      ? `✓ The CI (${pct(lower)}, ${pct(upper)}) successfully captures the true parameter (${pct(trueRate)}).`
-      : `This run's CI missed the true parameter — that happens ~5% of the time with 95% CIs.`;
+      ? `✓ The ${ciLabel} CI (${pct(lower)}, ${pct(upper)}) successfully captures the true parameter (${pct(trueRate)}).`
+      : `This run's CI missed the true parameter — that happens ~${missRate}% of the time with ${ciLabel} CIs.`;
     infWarn.style.color = trueRate >= lower && trueRate <= upper ? '#4ECCA3' : '#FFD93D';
   }
 
@@ -823,7 +842,21 @@ generatePopulation();
 drawPopulation(false);
 document.getElementById('canvasOverlay').classList.remove('hidden');
 
-// ── Info Card Dropdowns ───────────────────────────────────────
+// CI level buttons
+document.querySelectorAll('.ci-level-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.ci-level-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    state.ciLevel = parseFloat(this.dataset.level);
+    // Re-render CI if a result is already showing
+    if (state.lastSample.length) {
+      const results = computeResults(state.lastSample);
+      showResults(results, state.lastSample);
+    }
+  });
+});
+
+// Info Card Dropdowns
 document.querySelectorAll('.info-card').forEach(card => {
   function toggle(e) {
     if (e.target.closest('.card-dropdown')) return;
