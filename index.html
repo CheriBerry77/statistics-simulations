@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sampling Bias Simulator</title>
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="container">
+<h1>Sampling Bias Simulator</h1>
+
+<label>Population Support % <input id="support" type="number" value="60"></label>
+<label>Sample Size <input id="size" type="number" value="100"></label>
+
+<select id="method">
+<option value="srs">SRS</option>
+<option value="convenience">Convenience</option>
+<option value="voluntary">Voluntary Response</option>
+<option value="stratified">Stratified</option>
+<option value="cluster">Cluster</option>
+</select>
+
+<button onclick="runOnce()">Run Sample</button>
+<button onclick="runMany()">1000 Simulations</button>
+<button onclick="newChallenge()">Challenge Mode</button>
+
+<div id="results"></div>
+<canvas id="hist"></canvas>
+<div id="challenge"></div>
+
+<h2>AP Statistics Vocabulary</h2>
+<ul>
+<li>Bias: systematic deviation from truth.</li>
+<li>Sampling Distribution: distribution of a statistic over many samples.</li>
+<li>Confidence Interval: plausible values for a parameter.</li>
+<li>Coverage Rate: percent of intervals capturing the truth.</li>
+</ul>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>
