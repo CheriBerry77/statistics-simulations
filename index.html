@@ -341,7 +341,23 @@
 
         <!-- Inference Panel -->
         <div class="inference-panel hidden" id="inferencePanel">
-          <div class="inference-header">95% Confidence Interval</div>
+          <div class="inference-header-row">
+            <span class="inference-header" id="inferenceHeader">Confidence Interval</span>
+            <div class="ci-level-selector">
+              <span class="ci-level-label">Level</span>
+              <div class="ci-level-btns">
+                <button class="ci-level-btn" data-level="0.80">80%</button>
+                <button class="ci-level-btn" data-level="0.90">90%</button>
+                <button class="ci-level-btn active" data-level="0.95">95%</button>
+                <button class="ci-level-btn" data-level="0.99">99%</button>
+              </div>
+            </div>
+          </div>
+          <div class="ci-zstar-row" id="ciZstarRow">
+            <span class="ci-zstar-label">z* =</span>
+            <span class="ci-zstar-val" id="ciZstarVal">1.960</span>
+            <span class="ci-zstar-note">critical value for 95% CI</span>
+          </div>
           <div class="ci-visual" id="ciVisual"></div>
           <div class="ci-text" id="ciText"></div>
           <div class="inference-warning" id="inferenceWarning"></div>
