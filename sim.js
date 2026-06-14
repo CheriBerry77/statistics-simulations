@@ -543,7 +543,7 @@ function animateHero() {
 // ── UI helpers ────────────────────────────────────────────────
 function getMethodExplainerText(method) {
   const extras = {
-    srs:         'In this simulation, each dot has an equal chance of being selected — like drawing names from a hat.',
+    srs:         'In this simulation, each dot has an equal chance of being selected, like drawing names from a hat.',
     stratified:  'This simulation samples proportionally from Group A and Group B, ensuring both are represented.',
     cluster:     'Random clusters (groups) are selected, and every member of that cluster is included.',
     convenience: 'Group A (more accessible) members are much more likely to be chosen.',
