@@ -299,20 +299,20 @@ function showResults(results, sample) {
   if (mi.biasType === 'none') {
     biasExp.classList.add('good');
     biasIcon.textContent  = '✅';
-    biasTitle.textContent = mi.name + ' — Low Bias Risk';
+    biasTitle.textContent = mi.name + ' Low Bias Risk';
     biasDesc.textContent  = Math.abs(bias) < 0.05
-      ? `This sample is close to the population truth (${pct(trueRate)}). Any difference is sampling variability — what we'd expect from chance alone.`
+      ? `This sample is close to the population truth (${pct(trueRate)}). Any difference is sampling variability: what we'd expect from chance alone.`
       : `There's some difference this run, but with ${mi.name}, it's due to random chance, not a systematic flaw. Repeat the simulation to see it vary!`;
   } else if (mi.biasType === 'mild') {
     biasIcon.textContent  = '⚡';
-    biasTitle.textContent = mi.name + ' — Possible Cluster Bias';
+    biasTitle.textContent = mi.name + ' Possible Cluster Bias';
     biasDesc.textContent  = `Cluster sampling can introduce bias if the selected clusters aren't representative of the whole population. The yellow outlines show which clusters were chosen.`;
   } else {
     biasIcon.textContent  = '⚠️';
-    biasTitle.textContent = mi.name + ' — High Bias Risk';
+    biasTitle.textContent = mi.name + ' High Bias Risk';
     biasDesc.textContent  = state.method === 'convenience'
       ? `Convenience sampling over-selected Group A (${QUESTIONS[state.question]?.groupA || 'accessible group'}), who tend to answer "${Math.round(state.strataARateVal)}% YES." The sample is skewed away from the true population answer.`
-      : `Voluntary response sampling attracts people with strong opinions — people who say YES were more likely to respond, inflating the YES rate beyond the true population value.`;
+      : `Voluntary response sampling attracts people with strong opinions: people who say YES were more likely to respond, inflating the YES rate beyond the true population value.`;
   }
 
   // Confidence Interval
@@ -332,14 +332,14 @@ function showResults(results, sample) {
 
   const infWarn = document.getElementById('inferenceWarning');
   if (mi.biasType !== 'none') {
-    infWarn.textContent = '⚠️ This CI is misleading — confidence intervals assume an unbiased sampling method. Bias cannot be fixed with a larger sample.';
+    infWarn.textContent = '⚠️ This CI is misleading: confidence intervals assume an unbiased sampling method. Bias cannot be fixed with a larger sample.';
     infWarn.style.color = '';
   } else {
     const missRate = (100 - parseFloat(ciLabel)).toFixed(0);
     const captures = trueRate >= lower && trueRate <= upper;
     infWarn.textContent = captures
       ? `✓ The ${ciLabel} CI (${pct(lower)}, ${pct(upper)}) successfully captures the true parameter (${pct(trueRate)}).`
-      : `This run's CI missed the true parameter — that happens ~${missRate}% of the time with ${ciLabel} CIs.`;
+      : `This run's CI missed the true parameter; that happens ~${missRate}% of the time with ${ciLabel} CIs.`;
     infWarn.style.color = captures ? '#4ECCA3' : '#FFD93D';
   }
 
@@ -435,12 +435,12 @@ function runMany(times = 100) {
   if (mi.biasType === 'none') {
     biasExp.classList.add('good');
     biasIcon.textContent  = '✅';
-    biasTitle.textContent = `${mi.name} — Sampling Distribution`;
+    biasTitle.textContent = `${mi.name} Sampling Distribution`;
     biasDesc.textContent  = `Across 100 simulations, the average sample result was ${pct(mean)}, and the true population value is ${pct(trueRate)}. The difference (${pct(Math.abs(bias))}) is within expected sampling variability. Std dev of sample proportions: ${pct(stdDev)}`;
   } else {
     biasIcon.textContent  = '⚠️';
-    biasTitle.textContent = `${mi.name} — Persistent Bias Detected`;
-    biasDesc.textContent  = `Even after 100 simulations, the center of the distribution sits at ${pct(mean)}, not at the true value (${pct(trueRate)}). The bias of ${(bias >= 0 ? '+' : '')}${pct(bias)} is systematic — it won't go away with a larger sample or more repetitions.`;
+    biasTitle.textContent = `${mi.name} Persistent Bias Detected`;
+    biasDesc.textContent  = `Even after 100 simulations, the center of the distribution sits at ${pct(mean)}, not at the true value (${pct(trueRate)}). The bias of ${(bias >= 0 ? '+' : '')}${pct(bias)} is systematic: it won't go away with a larger sample or more repetitions.`;
   }
   biasExp.classList.remove('hidden');
 
