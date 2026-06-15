@@ -299,17 +299,17 @@ function showResults(results, sample) {
   if (mi.biasType === 'none') {
     biasExp.classList.add('good');
     biasIcon.textContent  = '✅';
-    biasTitle.textContent = mi.name + ' Low Bias Risk';
+    biasTitle.textContent = mi.name + ' — Low Bias Risk';
     biasDesc.textContent  = Math.abs(bias) < 0.05
       ? `This sample is close to the population truth (${pct(trueRate)}). Any difference is sampling variability: what we'd expect from chance alone.`
       : `There's some difference this run, but with ${mi.name}, it's due to random chance, not a systematic flaw. Repeat the simulation to see it vary!`;
   } else if (mi.biasType === 'mild') {
     biasIcon.textContent  = '⚡';
-    biasTitle.textContent = mi.name + ' Possible Cluster Bias';
+    biasTitle.textContent = mi.name + ' — Possible Cluster Bias';
     biasDesc.textContent  = `Cluster sampling can introduce bias if the selected clusters aren't representative of the whole population. The yellow outlines show which clusters were chosen.`;
   } else {
     biasIcon.textContent  = '⚠️';
-    biasTitle.textContent = mi.name + ' High Bias Risk';
+    biasTitle.textContent = mi.name + ' — High Bias Risk';
     biasDesc.textContent  = state.method === 'convenience'
       ? `Convenience sampling over-selected Group A (${QUESTIONS[state.question]?.groupA || 'accessible group'}), who tend to answer "${Math.round(state.strataARateVal)}% YES." The sample is skewed away from the true population answer.`
       : `Voluntary response sampling attracts people with strong opinions: people who say YES were more likely to respond, inflating the YES rate beyond the true population value.`;
