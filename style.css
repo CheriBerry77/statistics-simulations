@@ -619,20 +619,24 @@ body {
 /* ── Info Card Dropdowns ─────────────────────────────────── */
 .info-card {
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
   padding: 0;
   overflow: hidden;
 }
 .info-card:hover {
-  border-color: rgba(78, 204, 163, 0.4);
-  box-shadow: 0 0 0 1px rgba(78, 204, 163, 0.15);
+  border-color: rgba(78, 204, 163, 0.5);
+  box-shadow: 0 0 0 1px rgba(78, 204, 163, 0.2), 0 4px 16px rgba(0,0,0,0.2);
+  transform: translateY(-1px);
+}
+.info-card:active {
+  transform: translateY(0);
 }
 .info-card:focus-visible {
   outline: 2px solid var(--teal);
   outline-offset: 2px;
 }
 .card-top {
-  padding: 1rem 1.1rem;
+  padding: 1rem 1.1rem 0.85rem;
 }
 .info-card .card-label {
   display: flex;
@@ -640,19 +644,64 @@ body {
   justify-content: space-between;
   margin-bottom: 0.3rem;
 }
-.info-chevron {
-  font-size: 1rem;
+
+/* "Click to expand" hint strip at bottom of each card */
+.card-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.3rem 1.1rem;
+  background: rgba(78, 204, 163, 0.05);
+  border-top: 1px dashed rgba(78, 204, 163, 0.2);
+  font-family: var(--mono);
+  font-size: 0.65rem;
   color: var(--teal);
-  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  display: inline-block;
+  opacity: 0.75;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: opacity 0.2s, background 0.2s;
+  user-select: none;
+}
+.info-card:hover .card-hint {
+  opacity: 1;
+  background: rgba(78, 204, 163, 0.1);
+}
+.info-card[aria-expanded="true"] .card-hint {
+  display: none;
+}
+.card-hint-arrow {
+  font-size: 0.7rem;
+  transition: transform 0.2s;
+}
+.info-card:hover .card-hint-arrow {
+  transform: translateY(1px);
+}
+
+.info-chevron {
+  font-size: 0.95rem;
+  color: var(--teal);
+  background: rgba(78, 204, 163, 0.12);
+  border: 1px solid rgba(78, 204, 163, 0.25);
+  border-radius: 4px;
+  width: 20px; height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.15s;
   line-height: 1;
-  margin-left: 0.3rem;
+  flex-shrink: 0;
+}
+.info-card:hover .info-chevron {
+  background: rgba(78, 204, 163, 0.22);
 }
 .info-card[aria-expanded="true"] .info-chevron {
   transform: rotate(90deg);
+  background: rgba(78, 204, 163, 0.25);
 }
 .info-card[aria-expanded="true"] {
   border-color: rgba(78, 204, 163, 0.45);
+  transform: none;
 }
 
 /* Dropdown panel */
