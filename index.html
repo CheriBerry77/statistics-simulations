@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SampleSim: AP Statistics Survey Simulator</title>
+  <title>SampleSim — AP Statistics Survey Simulator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
@@ -31,7 +31,7 @@
     <div class="hero-content">
       <p class="hero-eyebrow">Interactive Learning Tool</p>
       <h1 class="hero-title">Does <em>how</em> you sample<br/>change what you find?</h1>
-      <p class="hero-sub">Design a survey, choose a sampling method, and watch bias emerge or disappear in real time.</p>
+      <p class="hero-sub">Design a survey, choose a sampling method, and watch bias emerge — or disappear — in real time.</p>
       <a href="#simulator" class="hero-cta">Start Simulating</a>
     </div>
     <div class="hero-mini-canvas">
@@ -200,9 +200,10 @@
               <div class="card-sub">actual parameter (p)</div>
               <div class="card-bar-wrap"><div class="card-bar truth-bar" id="barPopTruth"></div></div>
             </div>
+            <div class="card-hint"><span class="card-hint-arrow">▾</span> Click to see formula</div>
             <div class="card-dropdown" id="dropPopTruth">
               <div class="dropdown-inner">
-                <p class="drop-desc">The <strong>population parameter</strong> is the true proportion of YES answers in the entire population. In real life this is <em>unknown</em>: we use samples to estimate it.</p>
+                <p class="drop-desc">The <strong>population parameter</strong> is the true proportion of YES answers in the entire population. In real life this is <em>unknown</em> — we use samples to estimate it.</p>
                 <div class="drop-formula-block">
                   <div class="drop-formula-label">Formula</div>
                   <div class="drop-formula">p = (# YES in population) / N</div>
@@ -213,7 +214,7 @@
                 </div>
                 <ul class="drop-facts">
                   <li><span class="fact-key">Symbol</span> p (proportion) or μ (mean)</li>
-                  <li><span class="fact-key">Type</span> Parameter: describes the whole population</li>
+                  <li><span class="fact-key">Type</span> Parameter — describes the whole population</li>
                   <li><span class="fact-key">Known?</span> Only in simulations. In practice, we never know p exactly.</li>
                 </ul>
               </div>
@@ -228,6 +229,7 @@
               <div class="card-sub">this sample's statistic (p̂)</div>
               <div class="card-bar-wrap"><div class="card-bar sample-bar" id="barSampleResult"></div></div>
             </div>
+            <div class="card-hint"><span class="card-hint-arrow">▾</span> Click to see formula</div>
             <div class="card-dropdown" id="dropSampleResult">
               <div class="dropdown-inner">
                 <p class="drop-desc">The <strong>sample proportion</strong> p̂ ("p-hat") is the fraction of YES responses in your sample. It is our best <em>estimate</em> of the unknown population parameter p.</p>
@@ -243,7 +245,7 @@
                 </div>
                 <ul class="drop-facts">
                   <li><span class="fact-key">Symbol</span> p̂ (p-hat)</li>
-                  <li><span class="fact-key">Type</span> Statistic: computed from the sample</li>
+                  <li><span class="fact-key">Type</span> Statistic — computed from the sample</li>
                   <li><span class="fact-key">Larger n →</span> p̂ gets closer to p on average</li>
                 </ul>
               </div>
@@ -258,6 +260,7 @@
               <div class="card-sub">sample − population</div>
               <div class="bias-indicator" id="biasIndicator"></div>
             </div>
+            <div class="card-hint"><span class="card-hint-arrow">▾</span> Click to see formula</div>
             <div class="card-dropdown" id="dropBias">
               <div class="dropdown-inner">
                 <p class="drop-desc"><strong>Bias</strong> is a systematic error that causes the sample statistic to consistently over- or under-estimate the true parameter. Unlike random variability, bias does <em>not</em> shrink with larger samples.</p>
@@ -291,6 +294,7 @@
               <div class="card-value" id="valVariability">—</div>
               <div class="card-sub">std dev of sample proportions</div>
             </div>
+            <div class="card-hint"><span class="card-hint-arrow">▾</span> Click to see formula</div>
             <div class="card-dropdown" id="dropVariability">
               <div class="dropdown-inner">
                 <p class="drop-desc"><strong>Variability</strong> measures how spread out the sample proportions are across many repeated samples. A low-variability method consistently gives similar results; a high-variability method swings wildly.</p>
@@ -383,7 +387,7 @@
         <div class="concept-card">
           <div class="concept-icon">📊</div>
           <h3>Variability</h3>
-          <p>How spread out sample results are across many repetitions. Larger samples produce lower variability: the results cluster near the truth.</p>
+          <p>How spread out sample results are across many repetitions. Larger samples produce lower variability — the results cluster near the truth.</p>
           <div class="concept-detail">
             <strong>Try it:</strong> Run 100 simulations with n=20, then n=200. Watch the distribution compress.
           </div>
@@ -399,7 +403,7 @@
         <div class="concept-card">
           <div class="concept-icon">🔬</div>
           <h3>Inference</h3>
-          <p>Using sample data to draw conclusions about the population. Only valid when the sample is representative, which requires a good sampling method.</p>
+          <p>Using sample data to draw conclusions about the population. Only valid when the sample is representative — which requires a good sampling method.</p>
           <div class="concept-detail">
             <strong>Remember:</strong> A confidence interval is meaningless if the sample is biased.
           </div>
@@ -486,7 +490,7 @@
 
   <footer class="site-footer">
     <div class="footer-inner">
-      <p>SampleSim: Built for AP Statistics students. Simulations are for educational purposes.</p>
+      <p>SampleSim — Built for AP Statistics students. Simulations are for educational purposes.</p>
       <p class="footer-formula">p̂ ~ N(p, √(p(1−p)/n)) &nbsp;|&nbsp; Bias = E[p̂] − p</p>
     </div>
   </footer>
