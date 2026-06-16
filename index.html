@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SampleSim — AP Statistics Survey Simulator</title>
+  <title>SampleSim: AP Statistics Survey Simulator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
@@ -31,7 +31,7 @@
     <div class="hero-content">
       <p class="hero-eyebrow">Interactive Learning Tool</p>
       <h1 class="hero-title">Does <em>how</em> you sample<br/>change what you find?</h1>
-      <p class="hero-sub">Design a survey, choose a sampling method, and watch bias emerge — or disappear — in real time.</p>
+      <p class="hero-sub">Design a survey, choose a sampling method, and watch bias emerge or disappear in real time.</p>
       <a href="#simulator" class="hero-cta">Start Simulating</a>
     </div>
     <div class="hero-mini-canvas">
@@ -203,7 +203,7 @@
             <div class="card-hint"><span class="card-hint-arrow">▾</span> Click to see formula</div>
             <div class="card-dropdown" id="dropPopTruth">
               <div class="dropdown-inner">
-                <p class="drop-desc">The <strong>population parameter</strong> is the true proportion of YES answers in the entire population. In real life this is <em>unknown</em> — we use samples to estimate it.</p>
+                <p class="drop-desc">The <strong>population parameter</strong> is the true proportion of YES answers in the entire population. In real life this is <em>unknown</em>: we use samples to estimate it.</p>
                 <div class="drop-formula-block">
                   <div class="drop-formula-label">Formula</div>
                   <div class="drop-formula">p = (# YES in population) / N</div>
@@ -214,7 +214,7 @@
                 </div>
                 <ul class="drop-facts">
                   <li><span class="fact-key">Symbol</span> p (proportion) or μ (mean)</li>
-                  <li><span class="fact-key">Type</span> Parameter — describes the whole population</li>
+                  <li><span class="fact-key">Type</span> Parameter: describes the whole population</li>
                   <li><span class="fact-key">Known?</span> Only in simulations. In practice, we never know p exactly.</li>
                 </ul>
               </div>
@@ -245,7 +245,7 @@
                 </div>
                 <ul class="drop-facts">
                   <li><span class="fact-key">Symbol</span> p̂ (p-hat)</li>
-                  <li><span class="fact-key">Type</span> Statistic — computed from the sample</li>
+                  <li><span class="fact-key">Type</span> Statistic: computed from the sample</li>
                   <li><span class="fact-key">Larger n →</span> p̂ gets closer to p on average</li>
                 </ul>
               </div>
@@ -387,7 +387,7 @@
         <div class="concept-card">
           <div class="concept-icon">📊</div>
           <h3>Variability</h3>
-          <p>How spread out sample results are across many repetitions. Larger samples produce lower variability — the results cluster near the truth.</p>
+          <p>How spread out sample results are across many repetitions. Larger samples produce lower variability: the results cluster near the truth.</p>
           <div class="concept-detail">
             <strong>Try it:</strong> Run 100 simulations with n=20, then n=200. Watch the distribution compress.
           </div>
@@ -403,7 +403,7 @@
         <div class="concept-card">
           <div class="concept-icon">🔬</div>
           <h3>Inference</h3>
-          <p>Using sample data to draw conclusions about the population. Only valid when the sample is representative — which requires a good sampling method.</p>
+          <p>Using sample data to draw conclusions about the population. Only valid when the sample is representative, which requires a good sampling method.</p>
           <div class="concept-detail">
             <strong>Remember:</strong> A confidence interval is meaningless if the sample is biased.
           </div>
@@ -490,7 +490,7 @@
 
   <footer class="site-footer">
     <div class="footer-inner">
-      <p>SampleSim — Built for AP Statistics students. Simulations are for educational purposes.</p>
+      <p>SampleSim: Built for AP Statistics students. Simulations are for educational purposes.</p>
       <p class="footer-formula">p̂ ~ N(p, √(p(1−p)/n)) &nbsp;|&nbsp; Bias = E[p̂] − p</p>
     </div>
   </footer>
